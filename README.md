@@ -25,6 +25,11 @@ Cómo probar un caso límite (vacío, no encontrado o duplicado):
 
 > …
 
+## Carpetas
+
+- `src/` — clases del dominio (POO). Hoy no codeen.
+- `tests/` — un caso límite, cuando implementen.
+
 ## Alcance
 
 - v1: clases en `.py` (POO). Entrega Moodle: **2026-10-07 23:59**.
