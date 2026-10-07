@@ -1,0 +1,16 @@
+# Paquete del dominio — venta de entradas (v1)
+from .entrada import Entrada
+from .evento import Evento
+from .cola_compradores import ColaCompradores
+from .catalogo import CatalogoEntradas
+from .historial import HistorialReservas
+from .sistema import SistemaVentaEntradas
+
+__all__ = [
+    "Entrada",
+    "Evento",
+    "ColaCompradores",
+    "CatalogoEntradas",
+    "HistorialReservas",
+    "SistemaVentaEntradas",
+]
