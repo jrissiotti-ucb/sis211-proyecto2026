@@ -1,6 +1,6 @@
 """
-Orquesta cola (FIFO), catálogo (hash) e historial (lista).
-Aquí se combinan los tres flujos del mapa v1.
+Orquesta cola (FIFO), catálogo (hash) e historial (lista) [v1]
+y el BST de asientos [v2].
 """
 
 import sys
@@ -15,12 +15,14 @@ if __package__ in (None, ""):
     from src.cola_compradores import ColaCompradores
     from src.catalogo import CatalogoEntradas
     from src.historial import HistorialReservas
+    from src.asientos_bst import ArbolAsientos
 else:
     from .evento import Evento
     from .entrada import Entrada
     from .cola_compradores import ColaCompradores
     from .catalogo import CatalogoEntradas
     from .historial import HistorialReservas
+    from .asientos_bst import ArbolAsientos
 
 
 class SistemaVentaEntradas:
@@ -29,6 +31,7 @@ class SistemaVentaEntradas:
         self.catalogo = CatalogoEntradas()
         self.cola = ColaCompradores()
         self.historial = HistorialReservas()
+        self.asientos = ArbolAsientos()  # v2: índice ordenado por entrada_id
 
     def agregar_evento(self, evento_id, nombre):
         """Evento ya existente → ValueError (no se pisa)."""
@@ -51,6 +54,7 @@ class SistemaVentaEntradas:
             raise ValueError(f"Entrada ya existe: {entrada_id}")
         entrada = Entrada(entrada_id, evento_id, precio)
         self.catalogo.alta(entrada)
+        self.asientos.insertar(entrada_id)  # v2
         return entrada
 
     def buscar_entrada(self, entrada_id):
@@ -95,6 +99,28 @@ class SistemaVentaEntradas:
         """Reservas del usuario (lista). Vacío → []."""
         return self.historial.de_usuario(comprador)
 
+    # --- v2: consultas ordenadas con el BST de asientos -------------------
+
+    def existe_asiento(self, entrada_id):
+        """¿Existe ese código de asiento? (BST)"""
+        return self.asientos.existe(entrada_id)
+
+    def listar_fila(self, fila):
+        """
+        Entradas de una fila (ej. 'A' → A-01, A-02...), en orden de código.
+        Fila sin asientos → [].
+        """
+        codigos = self.asientos.con_prefijo(f"{fila}-")
+        return [self.catalogo.consulta(c) for c in codigos]
+
+    def asientos_entre(self, desde, hasta):
+        """Entradas con desde <= entrada_id <= hasta, en orden. Ninguna → []."""
+        return [self.catalogo.consulta(c) for c in self.asientos.rango(desde, hasta)]
+
+    def listar_asientos(self):
+        """Todas las entradas en orden de código. Sin entradas → []."""
+        return [self.catalogo.consulta(c) for c in self.asientos.listar_en_orden()]
+
 
 # ---------------------------------------------------------------------------
 # Programa principal: python src/sistema.py   (menú)
@@ -128,6 +154,9 @@ def _mostrar_menu():
     print("4. Historial de reservas de un comprador")
     print("5. Listar eventos")
     print("6. Ver cuántos esperan en la cola")
+    print("7. Ver una fila de asientos en orden (BST)")
+    print("8. Ver asientos entre dos códigos (BST)")
+    print("9. ¿Existe este asiento? (BST)")
     print("0. Salir")
 
 
@@ -164,6 +193,24 @@ def _opcion(s, op, leer):
             print(f"  {ev.evento_id}: {ev.nombre}")
     elif op == "6":
         print(f"  En espera: {len(s.cola)}")
+    elif op == "7":
+        fila = leer("Fila (ej. A): ").strip()
+        entradas = s.listar_fila(fila)
+        if not entradas:
+            print("  No hay asientos en esa fila")
+        for e in entradas:
+            print(f"  {e}")
+    elif op == "8":
+        desde = leer("Desde (ej. A-01): ").strip()
+        hasta = leer("Hasta (ej. A-03): ").strip()
+        entradas = s.asientos_entre(desde, hasta)
+        if not entradas:
+            print("  No hay asientos en ese rango")
+        for e in entradas:
+            print(f"  {e}")
+    elif op == "9":
+        codigo = leer("Código de asiento: ").strip()
+        print("  Sí existe" if s.existe_asiento(codigo) else "  No existe ese asiento")
     else:
         print("  ! Opción no válida.")
 
@@ -183,7 +230,7 @@ def menu(s, leer=input):
 
 
 def demo(s):
-    print("Demo v1: cola (FIFO) + catálogo (hash) + historial (lista)")
+    print("Demo v2: cola (FIFO) + catálogo (hash) + historial (lista) + BST de asientos")
     s.llegar_comprador("Ana")
     s.llegar_comprador("Beto")
     print("Llegaron Ana y Beto. Atiende primero a:", s.cola.frente())
@@ -195,6 +242,11 @@ def demo(s):
     print("Caso límite, entrada inexistente:")
     _intentar(s.buscar_entrada, "Z-99")
     print("Caso límite, historial vacío:", s.historial_de("Cora") or "No hay reservas")
+    print("v2 — fila A en orden (BST):", [e.entrada_id for e in s.listar_fila("A")])
+    print("v2 — asientos entre A-02 y B-01:",
+          [e.entrada_id for e in s.asientos_entre("A-02", "B-01")])
+    print("v2 — ¿existe B-02?", s.existe_asiento("B-02"), "| ¿existe Z-99?", s.existe_asiento("Z-99"))
+    print("Caso límite v2, fila sin asientos:", s.listar_fila("Z") or "No hay asientos en esa fila")
 
 
 def main(argv=None):
