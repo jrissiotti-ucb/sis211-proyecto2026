@@ -3,8 +3,6 @@ Catálogo de entrada_id de asiento/entrada → Entrada.
 Familia: tabla hash (dict).
 """
 
-from .entrada import Entrada
-
 
 class CatalogoEntradas:
     def __init__(self):

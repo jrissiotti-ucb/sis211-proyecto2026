@@ -83,6 +83,41 @@ def test_listar_eventos():
     assert nombres == ["Obra", "Feria"]
 
 
+def test_error_no_pierde_comprador():
+    s = SistemaVentaEntradas()
+    s.agregar_evento("E1", "Obra")
+    s.agregar_entrada("A-01", "E1")
+    s.llegar_comprador("Ana")
+    for malo in ("NO-EXISTE",):
+        try:
+            s.atender_y_vender(malo)
+            assert False, "Debía lanzar KeyError"
+        except KeyError:
+            pass
+    assert len(s.cola) == 1 and s.cola.frente() == "Ana"
+    s.atender_y_vender("A-01")
+    s.llegar_comprador("Beto")
+    try:
+        s.atender_y_vender("A-01")  # ya vendida
+        assert False, "Debía lanzar ValueError"
+    except ValueError:
+        pass
+    assert len(s.cola) == 1 and s.cola.frente() == "Beto"
+
+
+def test_entrada_repetida_no_se_pisa():
+    s = SistemaVentaEntradas()
+    s.agregar_evento("E1", "Obra")
+    s.agregar_entrada("A-01", "E1")
+    s.vender_a("A-01", "Ana")
+    try:
+        s.agregar_entrada("A-01", "E1")
+        assert False, "Debía lanzar ValueError"
+    except ValueError:
+        pass
+    assert s.buscar_entrada("A-01").vendida is True
+
+
 def test_caso_limite():
     test_cola_vacia()
     test_entrada_inexistente()
@@ -97,5 +132,7 @@ if __name__ == "__main__":
     test_entrada_duplicada()
     test_flujo_completo_fifo()
     test_listar_eventos()
+    test_error_no_pierde_comprador()
+    test_entrada_repetida_no_se_pisa()
     test_caso_limite()
     print("OK — todos los tests de límites y flujo pasaron.")
