@@ -53,6 +53,10 @@ en el BST (además de guardarlo en el hash de v1). Las consultas `listar_fila`,
 ordenados el árbol queda en forma de lista (búsqueda O(n)). Los recorridos son
 iterativos, así que funcionan igual aunque quede profundo (probado con 3000 asientos).
 
+**Formato de códigos:** los ids son `Fila-NN` con ceros (`A-01`..`A-99`), para que el
+orden alfabético coincida con el numérico. Con 100 o más asientos por fila habría que
+usar más dígitos (`A-001`).
+
 ## Casos límite
 
 | Situación | Resultado |
