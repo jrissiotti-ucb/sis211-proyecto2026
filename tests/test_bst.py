@@ -30,6 +30,16 @@ def armar_sistema():
     return s
 
 
+def verificar_balance(nodo):
+    if nodo is None:
+        return 0
+    altura_izquierda = verificar_balance(nodo.izq)
+    altura_derecha = verificar_balance(nodo.der)
+    assert abs(altura_izquierda - altura_derecha) <= 1
+    assert nodo.altura == 1 + max(altura_izquierda, altura_derecha)
+    return nodo.altura
+
+
 def test_arbol_vacio():
     a = ArbolAsientos()
     assert a.esta_vacio() and len(a) == 0
@@ -60,12 +70,24 @@ def test_duplicado():
     assert a.insertar("A-01") is False and len(a) == 6
 
 
-def test_arbol_muy_profundo_no_rompe():
+def test_rotaciones_avl():
+    for codigos in (("C", "B", "A"), ("A", "B", "C"),
+                    ("C", "A", "B"), ("A", "C", "B")):
+        a = ArbolAsientos()
+        for codigo in codigos:
+            a.insertar(codigo)
+        assert a.raiz.codigo == "B"
+        assert a.listar_en_orden() == ["A", "B", "C"]
+        verificar_balance(a.raiz)
+
+
+def test_inserciones_ordenadas_se_autobalancean():
     a = ArbolAsientos()
-    for i in range(3000):            # ya ordenados → árbol degenerado
+    for i in range(3000):            # inserción ordenada: debe conservar balance AVL
         a.insertar(f"A-{i:05d}")
     assert len(a.listar_en_orden()) == 3000
     assert len(a.rango("A-00010", "A-00019")) == 10
+    assert verificar_balance(a.raiz) <= 20
 
 
 def test_sistema_fila_en_orden():
@@ -99,7 +121,8 @@ if __name__ == "__main__":
     test_inorden_y_fila()
     test_rango()
     test_duplicado()
-    test_arbol_muy_profundo_no_rompe()
+    test_rotaciones_avl()
+    test_inserciones_ordenadas_se_autobalancean()
     test_sistema_fila_en_orden()
     test_sistema_limites()
     test_v1_sigue_igual()

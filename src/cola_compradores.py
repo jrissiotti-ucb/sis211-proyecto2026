@@ -24,6 +24,10 @@ class ColaCompradores:
             raise IndexError("No hay compradores en espera")
         return self._datos[0]
 
+    def en_espera(self):
+        """Copia de los compradores en espera, del frente al fondo."""
+        return list(self._datos)
+
     def esta_vacia(self):
         return len(self._datos) == 0
 
